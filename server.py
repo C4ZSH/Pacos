@@ -39,7 +39,15 @@ def upload():
             return '.' + ext
         newname = name_file(filed, get_ext(filed.filname))
         filed.save(app.config['UPLOAD_FOLDER'] + newname)
-    return newname
+    return '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form action="" method=post enctype=multipart/form-data>
+      <p><input type=file name=file>
+         <input type=submit value=Upload>
+    </form>
+    '''
 
 if __name__ == '__main__':
     app.run(debug=True, host='192.168.2.64')    
