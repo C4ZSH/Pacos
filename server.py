@@ -33,7 +33,7 @@ def upload():
         filed = request.files['file']
         def get_ext(filename):
             f = filename.split('.')
-            if len(f) > 1: ext = +f[-1:]
+            if len(f) > 1: ext = f[-1:]
             if ext in ('gz','bz2','xz') and f[-2:-1:] == 'tar':
                 return '.tar.%s' % ext
             return '.' + ext
