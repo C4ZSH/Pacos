@@ -46,7 +46,7 @@ def upload():
             
 #        hashgen = str(base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))))[-7:]
         
-        newname = str(base64.urlsafe_b64encode(str(hasher)) + get_ext(filed.filename)
+        newname = str(base64.urlsafe_b64encode(str(hasher))) + get_ext(filed.filename)
         filed.save(app.config['UPLOAD_FOLDER'] + newname)
     return '''
     <!doctype html>
