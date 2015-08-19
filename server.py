@@ -13,8 +13,9 @@ def firstrun():
     
 def name_file(fileo, extension):
     bs = 78931
+    print(fileo)
     hashgen = hashlib.md5()
-    filebuf = fileo.read(bs)
+    filebuf = fileo.stream.read(1024)
     while len(filebuf) > 0:
         hashgen.update(filebuf)
         filebuf = hashgen.update(filebuf)
@@ -37,7 +38,9 @@ def upload():
             if ext in ('gz','bz2','xz') and f[-2:-1:] == 'tar':
                 return '.tar.%s' % ext
             return '.' + ext
-        newname = name_file(filed, get_ext(filed.filename))
+            hashgen = base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))[-7:] + '.' + (extension or "")
+        
+        newname = hashgen + get_ext(filed.filename)
         filed.save(app.config['UPLOAD_FOLDER'] + newname)
     return '''
     <!doctype html>
