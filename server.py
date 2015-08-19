@@ -60,7 +60,16 @@ def upload():
         
         newname = base64.urlsafe_b64encode(hasher.digest()).decode()
         filed.save(app.config['UPLOAD_FOLDER'] + '/' +  newname)
-    return newname
+        return newname + '\n'
+    return '''
+    <!doctype html>
+    <title>CLI file uploads</title>
+    <body><p>Upload your files with 'curl -F "file=@path_to_your_file" host'</p>
+    </body>'''
+
+def file_request():
+    if request.method == "GET":
+        pass
 
 
 
