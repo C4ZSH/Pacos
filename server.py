@@ -38,7 +38,7 @@ def upload():
             if ext in ('gz','bz2','xz') and f[-2:-1:] == 'tar':
                 return '.tar.%s' % ext
             return '.' + ext
-            hashgen = base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))[-7:] + '.' + (extension or "")
+        hashgen = base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))[-7:])
         
         newname = hashgen + get_ext(filed.filename)
         filed.save(app.config['UPLOAD_FOLDER'] + newname)
