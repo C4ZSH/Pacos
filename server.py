@@ -53,13 +53,12 @@ def upload():
                 ch = filed.read(1024)
                 if not ch: break
                 hasher.update(ch)
-#            for ch in filed.chunks(): hasher.update(ch)
         finally:
             filed.seek(0)
             
 #        hashgen = str(base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))))[-7:]
         
-        newname = str(base64.urlsafe_b64encode(str(hasher))) + get_ext(filed.filename)
+        newname = str(base64.urlsafe_b64encode(str(hasher).encode('utf-8'))) + get_ext(filed.filename)
         filed.save(app.config['UPLOAD_FOLDER'] + newname)
     return '''
     <!doctype html>
