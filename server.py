@@ -34,8 +34,9 @@ def upload():
         def get_ext(filename):
             f = filename.split('.')
             if len(f) > 1: ext = +f[-1:]
-            if ext in ('gz','bz2','xz') and f[-2:-1:] = 'tar':
+            if ext in ('gz','bz2','xz') and f[-2:-1:] == 'tar':
                 return '.tar.%s' % ext
             return '.' + ext
-        filed.save(app.config['UPLOAD_FOLDER'] + name_file(filed, get_ext(filed.filname))
-    
+        newname = name_file(filed, get_ext(filed.filname))
+        filed.save(app.config['UPLOAD_FOLDER'] + newname)
+    return newname
