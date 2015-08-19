@@ -40,7 +40,7 @@ def upload():
             return '.' + ext
 
 
-        # hasher = hashlib.md5()
+         hasher = hashlib.md5()
 
         # def chuncker(file_o, chsize=1024):
         #     while True:
