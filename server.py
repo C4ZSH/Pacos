@@ -40,14 +40,14 @@ def upload():
             return '.' + ext
 
 
-        hasher = hashlib.md5()
+        # hasher = hashlib.md5()
 
-        def chuncker(file_o, chsize=1024):
-            while True:
-                chunck = file_o.read(chsize)
-                if not chunk: break
-                hasher.update(chunk)
-            filed.save(app.config['UPLOAD_FOLDER'] + newname)
+        # def chuncker(file_o, chsize=1024):
+        #     while True:
+        #         chunck = file_o.read(chsize)
+        #         if not chunk: break
+        #         hasher.update(chunk)
+
         try:
             while True:
                 ch = filed.read(1024)
@@ -58,8 +58,8 @@ def upload():
             
 #        hashgen = str(base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))))[-7:]
         
-        newname = str(base64.urlsafe_b64encode(str(hasher).encode('utf-8'))) + get_ext(filed.filename)
-        filed.save(app.config['UPLOAD_FOLDER'] + newname)
+        newname = str(base64.urlsafe_b64encode(str(hasher).encode('utf-8'))).encode('utf-8')
+        filed.save(app.config['UPLOAD_FOLDER'] + '/' +  newname)
     return newname
 
 
