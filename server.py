@@ -40,3 +40,6 @@ def upload():
         newname = name_file(filed, get_ext(filed.filname))
         filed.save(app.config['UPLOAD_FOLDER'] + newname)
     return newname
+
+if __name__ == '__main__':
+    app.run(debug=True, host='192.168.2.64')    
