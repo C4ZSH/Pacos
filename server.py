@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template
 import argparse
 import os
+import sqlite3
 import time, base64, hashlib
 
 # file upload server. should be able to upload stuff via curl or similar
@@ -8,20 +9,13 @@ import time, base64, hashlib
 
 def firstrun():
     ## generate config
-    pass
+    with sqlite3.connect("hashes.db") as conn:
+        if not os.path.isfile("hashes.db"):
+            with open("schema.sql", 'rt') as schm:
+                schema = schm.read()
+            conn.executescript(schema)
 
-    
-def name_file(fileo, extension):
-    bs = 78931
-    print(fileo)
-    hashgen = hashlib.md5()
-    filebuf = fileo.stream.read(1024)
-    while len(filebuf) > 0:
-        hashgen.update(filebuf)
-        filebuf = hashgen.update(filebuf)
 
-    return base64.urlsafe_b64encode(str(hashgen))[-7:] + '.' + (extension or "")
-#    return base64.urlsafe_b64encode(str(hashlib.md5(str(time.time()).encode('utf-8'))).encode('utf-8'))[-8:] + (extension or '')
 
 pathtodir = 'uploads'
 app = Flask(__name__)
@@ -42,12 +36,6 @@ def upload():
 
         hasher = hashlib.md5()
 
-        # def chuncker(file_o, chsize=1024):
-        #     while True:
-        #         chunck = file_o.read(chsize)
-        #         if not chunk: break
-        #         hasher.update(chunk)
-
         try:
             while True:
                 ch = filed.read(1024)
@@ -55,19 +43,31 @@ def upload():
                 hasher.update(ch)
         finally:
             filed.seek(0)
-            
-#        hashgen = str(base64.urlsafe_b64encode(str(hashlib.md5(filed.stream.read()))))[-7:]
-        
-        newname = base64.urlsafe_b64encode(hasher.digest()).decode()
-        filed.save(app.config['UPLOAD_FOLDER'] + '/' +  newname)
-        return newname + '\n'
+
+        def gen_hash(obj):
+            hasher = hashlib.md5()
+            try:
+                while True:
+                    ch = obj.read(1024)
+                    if not ch: break
+                    hasher.update(ch)
+            finally:
+                obj.seek(0)
+
+        filehash = gen_hash(filed) #hasher.digest()
+        filehash64 = base64.urlsafe_b64encode(filehash).decode()
+        filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash)
+        filename = filed.filename
+        urlhash = base64.urlsafe_b64encode(gen_hash((filehash + filename.encode('utf-8'))))
+        return filehash + '\n'
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
     <body><p>Upload your files with 'curl -F "file=@path_to_your_file" host'</p>
     </body>'''
 
-def file_request():
+@app.route('/<filehash>', methods=["GET"])
+def file_request(filehash):
     if request.method == "GET":
         pass
 
