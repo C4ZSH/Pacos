@@ -7,20 +7,49 @@ import time, base64, hashlib
 # file upload server. should be able to upload stuff via curl or similar
 # for this to serve.
 
+parser = argparse.ArgumentParser(description="Simple HTTP upload server")
+parser.add_argument("-d", "--debug", help="As it says on the tin", action="store_true")
+parser.add_argument("-H", "--bind-host", help="hostname to listen on, default 0.0.0.0 (all)", type=str, default='0.0.0.0')
+parser.add_argument("-p", "--bind-port", help="port to listen on, default 80, or 5000 if flag -d is used", type=int, default=80)
+parser.add_argument("--upload-folder", help="where user uploaded files get stored", type=str)
+
+args = parser.parse_args()
+DB_PATH = "hashes.db"
+LOG_PATH = ''
+UPLOAD_FOLDER = 'uploads'
+LISTEN_HOSTNAME = args.bind_host
+LISTEN_PORT = args.bind_port
+DEBUG = args.debug if not None else False
+
+if args.debug:
+    LISTEN_HOSTNAME = localhost
+    LISTEN_PORT = 5000
+
 def firstrun():
     ## generate config
-    with sqlite3.connect("hashes.db") as conn:
-        if not os.path.isfile("hashes.db"):
+    with sqlite3.connect(DB_PATH) as conn:
+        if not os.path.isfile(DB_PATH):
             with open("schema.sql", 'rt') as schm:
                 schema = schm.read()
             conn.executescript(schema)
+            conn.commit()
 
-
+def conn():
+    return sqlite3.connect(DB_PATH)
 
 pathtodir = 'uploads'
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = pathtodir
-app.config['MAX_CONTENT_LENGTH'] = 314 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
+
+@app.before_request
+def open_conn():
+    g.db = conn()
+
+@app.teardown_request
+def close_on_except(exception):
+    db = getattr(g, '_database', None)
+    if db is not None: db.close()
 
 @app.route('/', methods=['GET', 'POST'])
 def upload():
@@ -74,4 +103,4 @@ def file_request(filehash):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='192.168.2.64')    
+    app.run(debug=DEBUG, host=LISTEN_HOSTNAME, port=LISTEN_PORT)    
