@@ -1,0 +1,7 @@
+{
+    "allowed-extensions": [],
+    "bind-host": "0.0.0.0",
+    "bind-port": 80,
+    "max-upload-size": 52428800,
+    "upload-directory": "uploads"
+}

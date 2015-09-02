@@ -2,62 +2,49 @@ from flask import Flask, request, render_template, g
 import argparse
 import os, sys
 import sqlite3
-import time, base64, hashlib
+import time, base64, hashlib, json
 
 # file upload server. should be able to upload stuff via curl or similar
 # for this to serve.
 
 parser = argparse.ArgumentParser(description="Simple HTTP upload server")
 parser.add_argument("-d", "--debug", help="As it says on the tin", action="store_true")
-parser.add_argument("-H", "--bind-host", help="hostname to listen on, default 0.0.0.0 (all)", type=str, default='0.0.0.0')
-parser.add_argument("-p", "--bind-port", help="port to listen on, default 80, or 5000 if flag -d is used", type=int, default=80)
+parser.add_argument("-H", "--bind-host", help="hostname to listen on, default 0.0.0.0 (all)", type=str)
+parser.add_argument("-p", "--bind-port", help="port to listen on, default 80, or 5000 if flag -d is used", type=int)
 parser.add_argument("--upload-folder", help="where user uploaded files get stored", type=str)
+parser.add_argument("-c", "--config-file", help="path to config file, if it is not config.json", type=str)
+parser.add_argument("-b", "--database", help="path to database. will override that specified in the config", type=str)
 
 args = parser.parse_args()
-DB_PATH = "hashes.db"
+
+if not os.path.isfile('args.config_file'):
+    print("No config detected, exiting.")
+    sys.exit(1)
+with open(args.config_file) as config:
+    DB_PATH = config['database'] 
+    UPLOAD_FOLDER = config['upload-directory']
+    LISTEN_HOSTNAME = config['bind-host'] 
+    LISTEN_PORT = config['bind-port']
+    ALLOWED_EXTENSIONS = config['allowed-extensions']
+    MAX_UPLOAD_SIZE = config['max-upload-size']
+
+DB_PATH = args.database if args.database is not None
 LOG_PATH = ''
-UPLOAD_FOLDER = 'uploads'
-LISTEN_HOSTNAME = args.bind_host
-LISTEN_PORT = args.bind_port
-DEBUG = args.debug if not None else False
+UPLOAD_FOLDER = args.upload_folder if args.upload_folder is not None
+LISTEN_HOSTNAME = args.bind_host if args.bind_host is not None
+LISTEN_PORT = args.bind_port if args.bind_port is not None
+DEBUG = args.debug 
 
 if args.debug:
     LISTEN_HOSTNAME = localhost
     LISTEN_PORT = 5000
 
-def firstrun():
-    ## generate config
-    with sqlite3.connect(DB_PATH) as conn:
-        if not os.path.isfile(DB_PATH):
-            with open("schema.sql", 'rt') as schm:
-                schema = schm.read()
-            conn.executescript(schema)
-            conn.commit()
-
-def confgen():
-    mkconf = input("No config file detected. Press enter to generate one interactively, or ^C to exit and create one by hand using sampleconf.json as a template\n")
-    if mkconf = 'exit': sys.exit(0)
-    host = input("If you are unsure what to enter, pressing return will use reasonable defaults\nHostname to listen on (default: all): ")
-    v_host = '0.0.0.0' if host == '' else host
-    port = input("Port to listen on (default: 80): ")
-    if port != '' and (not port.isdigit() or int(port) < 65536):
-        port = input("Please enter a valid port, or press enter to use default: ")
-    v_port = 80 if port == '' else port
-    uploaddir = input("Path to directory for user-uploaded files (default: sthen/uploads/): ")
-    v_uploaddir = 'uploads' if uploaddir == '' else uploaddir
-    maxsize = input("Maximum allowed file size for uploads in bytes, or use suffix K, M, or G (default: 50 MB): ")
-    v_maxsize = 50 * 1024 * 1024
-    ssufx = {'K': 1024, 'M': 1024*1024, 'G': 1024**3}
-    if maxsize.strip()[-1:].upper() in ssufx and maxsize.strip()[:-1].isdigit(): 
-        v_maxsize = int(maxsize.strip()[:-1]) * ssufx[maxsize.strip()[-1:].upper()]
-
 def conn():
     return sqlite3.connect(DB_PATH)
 
-pathtodir = 'uploads'
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = pathtodir
-app.config['MAX_CONTENT_LENGTH'] = 4 * 1024 * 1024
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
 
 @app.before_request
 def open_conn():
