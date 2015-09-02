@@ -12,16 +12,16 @@ parser.add_argument("-d", "--debug", help="As it says on the tin", action="store
 parser.add_argument("-H", "--bind-host", help="hostname to listen on, default 0.0.0.0 (all)", type=str)
 parser.add_argument("-p", "--bind-port", help="port to listen on, default 80, or 5000 if flag -d is used", type=int)
 parser.add_argument("--upload-folder", help="where user uploaded files get stored", type=str)
-parser.add_argument("-c", "--config-file", help="path to config file, if it is not config.json", type=str)
+parser.add_argument("-c", "--config-file", help="path to config file, if it is not config.json", type=str, default="config.json")
 parser.add_argument("-b", "--database", help="path to database. will override that specified in the config", type=str)
 
 args = parser.parse_args()
-
-if not os.path.isfile('args.config_file'):
+print(args)
+if not os.path.isfile(args.config_file):
     print("No config detected, exiting.")
     sys.exit(1)
 with open(args.config_file) as config:
-    config = json.loads(config)
+    config = json.loads(config.read())
     DB_PATH = config['database'] 
     UPLOAD_FOLDER = config['upload-directory']
     LISTEN_HOSTNAME = config['bind-host'] 
@@ -37,7 +37,7 @@ LISTEN_PORT = args.bind_port if args.bind_port is not None else LISTEN_PORT
 DEBUG = args.debug 
 
 if DEBUG:
-    LISTEN_HOSTNAME = localhost
+    LISTEN_HOSTNAME = '192.168.2.64'
     LISTEN_PORT = 5000
 
 def conn():
@@ -60,6 +60,7 @@ def close_on_except(exception):
 def upload():
     if request.method == 'POST':
         filed = request.files['file']
+        print(app.config['UPLOAD_FOLDER'])
         def get_ext(filename):
             f = filename.split('.')
             ext = f[-1:] if len(f) > 1 else ""
@@ -87,13 +88,14 @@ def upload():
                     hasher.update(ch)
             finally:
                 obj.seek(0)
+            return hasher.digest()
 
         filehash = gen_hash(filed) #hasher.digest()
         filehash64 = base64.urlsafe_b64encode(filehash).decode()
-        filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash)
+        filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash64)
         filename = filed.filename
-        urlhash = base64.urlsafe_b64encode(gen_hash((filehash + filename.encode('utf-8'))))
-        return filehash + '\n'
+        urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest())
+        return filehash64 + '\n' + urlhash.decode() + '\n'
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
