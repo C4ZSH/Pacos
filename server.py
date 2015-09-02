@@ -21,6 +21,7 @@ if not os.path.isfile('args.config_file'):
     print("No config detected, exiting.")
     sys.exit(1)
 with open(args.config_file) as config:
+    config = json.loads(config)
     DB_PATH = config['database'] 
     UPLOAD_FOLDER = config['upload-directory']
     LISTEN_HOSTNAME = config['bind-host'] 
@@ -28,14 +29,14 @@ with open(args.config_file) as config:
     ALLOWED_EXTENSIONS = config['allowed-extensions']
     MAX_UPLOAD_SIZE = config['max-upload-size']
 
-DB_PATH = args.database if args.database is not None
+DB_PATH = args.database if args.database is not None else DB_PATH
 LOG_PATH = ''
-UPLOAD_FOLDER = args.upload_folder if args.upload_folder is not None
-LISTEN_HOSTNAME = args.bind_host if args.bind_host is not None
-LISTEN_PORT = args.bind_port if args.bind_port is not None
+UPLOAD_FOLDER = args.upload_folder if args.upload_folder is not None else UPLOAD_FOLDER
+LISTEN_HOSTNAME = args.bind_host if args.bind_host is not None else LISTEN_HOST_NAME
+LISTEN_PORT = args.bind_port if args.bind_port is not None else LISTEN_PORT
 DEBUG = args.debug 
 
-if args.debug:
+if DEBUG:
     LISTEN_HOSTNAME = localhost
     LISTEN_PORT = 5000
 
