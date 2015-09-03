@@ -98,10 +98,11 @@ def upload():
         urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest())
         curs = get_db().cursor()
         hostname_accessed = request.headers['Host']
-        print(url_for('file_request', filehash=urlhash))
+        url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
+        url_from_flask = url_for('file_request', filehash=urlhash)
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
-        return filehash64 + '\n' + urlhash.decode() + '\n' 
+        return filehash64 + '\n' + urlhash.decode() + '\n' + url_from_host + '\n' + url_from_flask + '\n'
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
@@ -139,7 +140,7 @@ def file_info(filehash):
         <body><h1>Information for %s</h1>
               <p><b>Filesize:</b> %s</p>
               <p><b>Mimetype:</b> %s</p>
-        </body> """
+        </body> """ % (filename, sizeof, mimetype)
 
 
 
