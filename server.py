@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, g
+from flask import Flask, request, render_template, g, make_response
 import argparse
 import os, sys
 import sqlite3
@@ -94,18 +94,52 @@ def upload():
         filehash64 = base64.urlsafe_b64encode(filehash).decode()
         filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash64)
         filename = filed.filename
+        mimetype = filed.content_type
         urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest())
-        return filehash64 + '\n' + urlhash.decode() + '\n'
+        curs = get_db().cursor()
+        hostname_accessed = request.headers['Host']
+        print(url_for('file_request', filehash=urlhash))
+        tup = (urlhash, filehash64, filename, mimetype)
+        curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
+        return filehash64 + '\n' + urlhash.decode() + '\n' 
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
     <body><p>Upload your files with 'curl -F "file=@path_to_your_file" host'</p>
     </body>'''
 
-@app.route('/<filehash>', methods=["GET"])
-def file_request(filehash):
-    if request.method == "GET":
-        pass
+@app.route('/<urlhash>', methods=["GET"])
+def file_request(urlhash): # download page
+    curs = get_db().cursor()
+    uhash = (urlhash,)
+    curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
+    row = curs.fetchone()
+    if row is None: flask.abort(404)
+    else:
+        filehash = row[1]
+        filename = row[2]
+        
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filehash, as_attachment=True, attachment_filename=filename)
+
+@app.route('/<filehash>/info', methods=["GET"])
+def file_info(filehash):
+    curs = get_db().cursor()
+    uhash = (urlhash,)
+    curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
+    row = curs.fetchone()
+    if row is None: flask.abort(404)
+    else: 
+        filehash = row[1]
+        filename = row[2]
+        mimetype = row[3]
+        sizeof = os.path.getsize(UPLOAD_FOLDER + '/' + filehash)
+        return """
+        <!doctype html>
+        <title>File Info</title>
+        <body><h1>Information for %s</h1>
+              <p><b>Filesize:</b> %s</p>
+              <p><b>Mimetype:</b> %s</p>
+        </body> """
 
 
 
