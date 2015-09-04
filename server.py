@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, g, make_response, url_for
+from flask import Flask, request, render_template, g, make_response, url_for, abort
 import argparse
 import os, sys
 import sqlite3
@@ -33,7 +33,7 @@ DB_PATH = args.database if args.database is not None else DB_PATH
 LOG_PATH = ''
 UPLOAD_FOLDER = args.upload_folder if args.upload_folder is not None else UPLOAD_FOLDER
 LISTEN_HOSTNAME = args.bind_host if args.bind_host is not None else LISTEN_HOSTNAME
-LISTEN_PORT = args.bind_port if args.bind_port is not None else LISTEN_PORT
+LISTEN_PORT = args.bind_port if args.bind_port is not None else int(LISTEN_PORT)
 DEBUG = args.debug 
 
 if DEBUG:
