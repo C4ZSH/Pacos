@@ -45,8 +45,9 @@ def init_db(DB_PATH):
         if not os.path.isfile(DB_PATH):
             with open("schema.sql", 'rt') as schm:
                 schema = schm.read()
-            conn.executescript(schema)
-            conn.commit()    
+                conn.executescript(schema)
+                conn.commit()    
+
 
 if __name__ == '__main__': 
     if not args.init_db_only:

@@ -104,10 +104,10 @@ def upload():
         curs = get_db().cursor()
         hostname_accessed = request.headers['Host']
         url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
-        url_from_flask = url_for('file_request', filehash=urlhash)
+        url_from_flask = url_for('file_request', urlhash=urlhash)
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
-        return filehash64 + '\n' + urlhash + '\n' + url_from_host + '\n' + url_from_flask + '\n'
+        return filehash64 + '\n' + urlhash + '\n' + url_from_host + '\n' + url_from_flask +'\n'
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
