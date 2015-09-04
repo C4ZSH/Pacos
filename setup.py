@@ -57,6 +57,6 @@ if __name__ == '__main__':
         print("Initialising new database at %s" % db)
     else:
         with open(conffile) as conf:
-            conf = json.loads(conf)
+            conf = json.loads(conf.read())
             db = conf['database']
     init_db(db)

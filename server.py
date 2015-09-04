@@ -43,6 +43,11 @@ if DEBUG:
 def conn():
     return sqlite3.connect(DB_PATH)
 
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None: db = g._database = conn()
+    return db
+
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
