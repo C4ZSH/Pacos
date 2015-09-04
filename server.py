@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, g, make_response
+from flask import Flask, request, render_template, g, make_response, url_for
 import argparse
 import os, sys
 import sqlite3
@@ -32,7 +32,7 @@ with open(args.config_file) as config:
 DB_PATH = args.database if args.database is not None else DB_PATH
 LOG_PATH = ''
 UPLOAD_FOLDER = args.upload_folder if args.upload_folder is not None else UPLOAD_FOLDER
-LISTEN_HOSTNAME = args.bind_host if args.bind_host is not None else LISTEN_HOST_NAME
+LISTEN_HOSTNAME = args.bind_host if args.bind_host is not None else LISTEN_HOSTNAME
 LISTEN_PORT = args.bind_port if args.bind_port is not None else LISTEN_PORT
 DEBUG = args.debug 
 
@@ -100,14 +100,14 @@ def upload():
         filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash64)
         filename = filed.filename
         mimetype = filed.content_type
-        urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest())
+        urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest()).decode()
         curs = get_db().cursor()
         hostname_accessed = request.headers['Host']
         url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
         url_from_flask = url_for('file_request', filehash=urlhash)
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
-        return filehash64 + '\n' + urlhash.decode() + '\n' + url_from_host + '\n' + url_from_flask + '\n'
+        return filehash64 + '\n' + urlhash + '\n' + url_from_host + '\n' + url_from_flask + '\n'
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
