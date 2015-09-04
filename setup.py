@@ -41,8 +41,8 @@ def confgen():
     return v_hashdb
 
 def init_db(DB_PATH):
-    with sqlite3.connect(DB_PATH) as conn:
-        if not os.path.isfile(DB_PATH):
+    if not os.path.isfile(DB_PATH):
+        with sqlite3.connect(DB_PATH) as conn:
             with open("schema.sql", 'rt') as schm:
                 schema = schm.read()
                 conn.executescript(schema)
