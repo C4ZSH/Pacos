@@ -154,14 +154,18 @@ def file_info(urlhash):
         elif bytess < 1024**4 :
             units = 'GB'
             sizeof = round(bytess / (1024**3), 2)
-        sizeof = "%d %s"
+        sizeof = "%d %s" % (sizeof, units)
+
+        hostname_accessed = request.headers['Host']
+        url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
         return """
         <!doctype html>
         <title>File Info</title>
         <body><h1>Information for %s</h1>
               <p><b>Filesize:</b> %s</p>
               <p><b>Mimetype:</b> %s</p>
-        </body> """ % (filename, sizeof, mimetype)
+              <p><a href=%s>Download now</a></p>
+        </body> """ % (filename, sizeof, mimetype, url_from_host)
 
 
 
