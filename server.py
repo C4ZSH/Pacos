@@ -97,7 +97,8 @@ def upload():
 
         filehash = gen_hash(filed) #hasher.digest()
         filehash64 = base64.urlsafe_b64encode(filehash).decode()
-        filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash64)
+        if not os.path.isfile(app.config['UPLOAD_FOLDER'] + '/' + filehash64):
+            filed.save(app.config['UPLOAD_FOLDER'] + '/' +  filehash64)
         filename = filed.filename
         mimetype = filed.content_type
         urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest()).decode()
@@ -107,6 +108,7 @@ def upload():
         url_from_flask = url_for('file_request', urlhash=urlhash)
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
+        curs.commit()
         return filehash64 + '\n' + urlhash + '\n' + url_from_host + '\n' + url_from_flask +'\n'
     return '''
     <!doctype html>
@@ -120,20 +122,20 @@ def file_request(urlhash): # download page
     uhash = (urlhash,)
     curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
     row = curs.fetchone()
-    if row is None: flask.abort(404)
+    if row is None: abort(404)
     else:
         filehash = row[1]
         filename = row[2]
         
         return send_from_directory(app.config['UPLOAD_FOLDER'], filehash, as_attachment=True, attachment_filename=filename)
 
-@app.route('/<filehash>/info', methods=["GET"])
-def file_info(filehash):
+@app.route('/<urlhash>/info', methods=["GET"])
+def file_info(urlhash):
     curs = get_db().cursor()
     uhash = (urlhash,)
     curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
     row = curs.fetchone()
-    if row is None: flask.abort(404)
+    if row is None: abort(404)
     else: 
         filehash = row[1]
         filename = row[2]
