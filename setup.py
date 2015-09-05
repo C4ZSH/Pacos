@@ -60,4 +60,8 @@ if __name__ == '__main__':
         with open(conffile) as conf:
             conf = json.loads(conf.read())
             db = conf['database']
+            updir = conf['upload-directory']
     init_db(db)
+    if updir not in os.listdir(): 
+        os.mkdir(updir)
+        print("Creating upload folder")

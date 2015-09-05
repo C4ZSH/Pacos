@@ -102,13 +102,13 @@ def upload():
         filename = filed.filename
         mimetype = filed.content_type
         urlhash = base64.urlsafe_b64encode(hashlib.md5(filehash + filename.encode('utf-8')).digest()).decode()
-        curs = get_db().cursor()
+        curs = g.db.cursor()
         hostname_accessed = request.headers['Host']
         url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
         url_from_flask = url_for('file_request', urlhash=urlhash)
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
-        curs.commit()
+        g.db.commit()
         return filehash64 + '\n' + urlhash + '\n' + url_from_host + '\n' + url_from_flask +'\n'
     return '''
     <!doctype html>
