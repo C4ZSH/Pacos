@@ -106,7 +106,7 @@ def upload():
     <title>CLI file uploads</title>
     <body><p>Upload your files with 'curl -F "file=@path_to_your_file" %s'</p>
           <p>Append '/info' to the url returned to get information about the file</p>
-    </body>''' % hostname_accessed
+    </body>''' % request.headers['Host']
 
 @app.route('/<urlhash>', methods=["GET"])
 def file_request(urlhash): # download page
