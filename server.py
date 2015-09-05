@@ -2,7 +2,7 @@ from flask import Flask, request, render_template, g, url_for, abort, send_from_
 import argparse
 import os, sys
 import sqlite3
-import time, base64, hashlib, json
+import base64, hashlib, json
 
 # file upload server. should be able to upload stuff via curl or similar
 # for this to serve.
@@ -16,7 +16,7 @@ parser.add_argument("-c", "--config-file", help="path to config file, if it is n
 parser.add_argument("-b", "--database", help="path to database. will override that specified in the config", type=str)
 
 args = parser.parse_args()
-print(args)
+
 if not os.path.isfile(args.config_file):
     print("No config detected, exiting.")
     sys.exit(1)
@@ -65,7 +65,6 @@ def close_on_except(exception):
 def upload():
     if request.method == 'POST':
         filed = request.files['file']
-        print(app.config['UPLOAD_FOLDER'])
         def get_ext(filename):
             f = filename.split('.')
             ext = f[-1:] if len(f) > 1 else ""
@@ -75,14 +74,6 @@ def upload():
 
 
         hasher = hashlib.md5()
-
-        try:
-            while True:
-                ch = filed.read(1024)
-                if not ch: break
-                hasher.update(ch)
-        finally:
-            filed.seek(0)
 
         def gen_hash(obj):
             hasher = hashlib.md5()
@@ -113,9 +104,9 @@ def upload():
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
-    <body><p>Upload your files with 'curl -F "file=@path_to_your_file" host'</p>
+    <body><p>Upload your files with 'curl -F "file=@path_to_your_file" %s'</p>
           <p>Append '/info' to the url returned to get information about the file</p>
-    </body>'''
+    </body>''' % hostname_accessed
 
 @app.route('/<urlhash>', methods=["GET"])
 def file_request(urlhash): # download page

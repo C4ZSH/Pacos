@@ -38,7 +38,7 @@ def confgen():
     with open(conffile, 'w') as config:
         json.dump(data, config, sort_keys=True, indent=4)
     print('Wrote config to %s. Edit this file or run this script again to make changes.' % conffile)
-    return v_hashdb
+    return (v_hashdb, v_uploaddir)
 
 def init_db(DB_PATH):
     if not os.path.isfile(DB_PATH):
@@ -51,10 +51,12 @@ def init_db(DB_PATH):
 
 if __name__ == '__main__': 
     if not args.init_db_only:
-        try: db = confgen()
+        try: res = confgen()
         except KeyboardInterrupt:
             print('\n')
             sys.exit(0)
+        db = res[0]
+        updir = res[1]
         print("Initialising new database at %s" % db)
     else:
         with open(conffile) as conf:
