@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, g, make_response, url_for, abort
+from flask import Flask, request, render_template, g, url_for, abort, send_from_directory
 import argparse
 import os, sys
 import sqlite3
@@ -109,11 +109,12 @@ def upload():
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
         g.db.commit()
-        return filehash64 + '\n' + urlhash + '\n' + url_from_host + '\n' + url_from_flask +'\n'
+        return url_from_host + '\n'
     return '''
     <!doctype html>
     <title>CLI file uploads</title>
     <body><p>Upload your files with 'curl -F "file=@path_to_your_file" host'</p>
+          <p>Append '/info' to the url returned to get information about the file</p>
     </body>'''
 
 @app.route('/<urlhash>', methods=["GET"])
@@ -140,7 +141,20 @@ def file_info(urlhash):
         filehash = row[1]
         filename = row[2]
         mimetype = row[3]
-        sizeof = os.path.getsize(UPLOAD_FOLDER + '/' + filehash)
+        bytess = os.path.getsize(UPLOAD_FOLDER + '/' + filehash)
+        if bytess < 1024: 
+            units = 'bytes'
+            sizeof = bytess
+        elif bytess < 1024 * 1024:
+            units = 'KB'
+            sizeof = round(bytess / 1024, 2)
+        elif bytess < 1024**3:
+            units = 'MB'
+            sizeof = round(bytess / (1024*1024), 2)
+        elif bytess < 1024**4 :
+            units = 'GB'
+            sizeof = round(bytess / (1024**3), 2)
+        sizeof = "%d %s"
         return """
         <!doctype html>
         <title>File Info</title>
