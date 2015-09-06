@@ -1,4 +1,5 @@
 from flask import Flask, request, render_template, g, url_for, abort, send_from_directory
+from flask import redirect
 import argparse
 import os, sys
 import sqlite3
@@ -62,7 +63,9 @@ def close_on_except(exception):
     if db is not None: db.close()
 
 @app.route('/', methods=['GET', 'POST'])
+@app.route('/upload', methods=['GET', 'POST'])
 def upload():
+    route = request.url_rule
     if request.method == 'POST':
         filed = request.files['file']
         def get_ext(filename):
@@ -100,13 +103,30 @@ def upload():
         tup = (urlhash, filehash64, filename, mimetype)
         curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
         g.db.commit()
-        return url_from_host + '\n'
-    return '''
-    <!doctype html>
-    <title>CLI file uploads</title>
-    <body><p>Upload your files with 'curl -F "file=@path_to_your_file" %s'</p>
-          <p>Append '/info' to the url returned to get information about the file</p>
-    </body>''' % request.headers['Host']
+        if 'upload' in route.rule: return redirect(url_for('file_info', urlhash=urlhash))
+        else: return '\n' + url_from_host + '\n'
+
+    if 'upload' in route.rule: # have form for browser upload if accessed at /upload
+        return '''
+        <!doctype html>
+        <title>Upload your file</title>
+        <form method=post enctype="multipart/form-data" action=''>
+          <p><input type=file name=file>
+             <input type=submit value=Upload></p>
+        </form> '''
+    else:
+        return '''
+        <!doctype html>
+        <title>Simple file uploads</title>
+        <body><h1>Usage</h1>
+              <h2>Upload from the command line</h2>
+              <p>Upload your files with 'curl -F "file=@path_to_your_file" {0}'</p>
+              <h2>Upload from a web browser</h2>
+              <p>Navigate to <a href="http://{0}/upload">http://{0}/upload</a> in a web browser to upload your file</p>
+              <h2>Other</h2>
+              <p>Append '/info' to the url returned to get information about the file</p>
+              <p>Coming soon: Append '/view' to the url returned for uploaded images to view them in a browser</p>
+        </body>'''.format(request.headers['Host'])
 
 @app.route('/<urlhash>', methods=["GET"])
 def file_request(urlhash): # download page
