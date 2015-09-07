@@ -41,6 +41,7 @@ if DEBUG:
     LISTEN_HOSTNAME = '192.168.2.64'
     LISTEN_PORT = 5000
 
+# helper functions
 def conn():
     return sqlite3.connect(DB_PATH)
 
@@ -48,6 +49,11 @@ def get_db():
     db = getattr(g, '_database', None)
     if db is None: db = g._database = conn()
     return db
+
+def can_display(mime):
+    displable = ['image/jpeg', 'text/plain', 'audio/mpeg', 'video/mpeg', 'image/png',
+                 'image/gif', 'application/pdf', 'image/svg+xml']
+    return mime.lower() is in displable
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -178,6 +184,23 @@ def file_info(urlhash):
               <p><a href=%s>Download now</a></p>
         </body> """ % (filename, sizeof, mimetype, url_from_host)
 
+
+@app.route('/<urlhash>/view', methods=["GET"])
+def view_file(urlhash):
+    curs = get_db().cursor()
+    uhash = (urlhash,)
+    curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
+    row = curs.fetchone()
+    if row is None: abort(404)
+    else:
+        filehash = row[1]
+        filename = row[2]
+        mimetype = row[3]
+        
+        if can_display(mimetype):
+            return send_from_directory(app.config['UPLOAD_FOLDER'], filehash, mimetype=mimetype)
+        else: 
+            abort(404)
 
 
 if __name__ == '__main__':
