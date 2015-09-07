@@ -107,8 +107,10 @@ def upload():
         url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
         url_from_flask = url_for('file_request', urlhash=urlhash)
         tup = (urlhash, filehash64, filename, mimetype)
-        curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
-        g.db.commit()
+        try:
+            curs.execute('INSERT INTO hashes VALUES (?,?,?,?)', tup)
+            g.db.commit()
+        except sqlite3.IntegrityError: pass
         if 'upload' in route.rule: return redirect(url_for('file_info', urlhash=urlhash))
         else: return '\n' + url_from_host + '\n'
 
