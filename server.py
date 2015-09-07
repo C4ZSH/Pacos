@@ -53,7 +53,7 @@ def get_db():
 def can_display(mime):
     displable = ['image/jpeg', 'text/plain', 'audio/mpeg', 'video/mpeg', 'image/png',
                  'image/gif', 'application/pdf', 'image/svg+xml']
-    return mime.lower() is in displable
+    return mime.lower() in displable
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -131,11 +131,12 @@ def upload():
               <p>Navigate to <a href="http://{0}/upload">http://{0}/upload</a> in a web browser to upload your file</p>
               <h2>Other</h2>
               <p>Append '/info' to the url returned to get information about the file</p>
-              <p>Coming soon: Append '/view' to the url returned for uploaded images to view them in a browser</p>
+              <p>Append '/view' to the url returned for uploaded images to view them in a browser</p>
         </body>'''.format(request.headers['Host'])
 
 @app.route('/<urlhash>', methods=["GET"])
-def file_request(urlhash): # download page
+def file_request(urlhash):
+    '''Direct download of file if accessed by urlhash alone'''
     curs = get_db().cursor()
     uhash = (urlhash,)
     curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
@@ -149,6 +150,7 @@ def file_request(urlhash): # download page
 
 @app.route('/<urlhash>/info', methods=["GET"])
 def file_info(urlhash):
+    '''Return information for file at urlhash/info'''
     curs = get_db().cursor()
     uhash = (urlhash,)
     curs.execute('SELECT * FROM hashes WHERE urlhash=?', uhash)
@@ -175,14 +177,17 @@ def file_info(urlhash):
 
         hostname_accessed = request.headers['Host']
         url_from_host = 'http://%s/%s' % (hostname_accessed, urlhash)
-        return """
-        <!doctype html>
+        to_return = """<!doctype html>
         <title>File Info</title>
         <body><h1>Information for %s</h1>
               <p><b>Filesize:</b> %s</p>
               <p><b>Mimetype:</b> %s</p>
               <p><a href=%s>Download now</a></p>
-        </body> """ % (filename, sizeof, mimetype, url_from_host)
+         """ % (filename, sizeof, mimetype, url_from_host)
+        if can_display(mimetype):
+            to_return = to_return +'\n<p><a href=%s/view>View</a></p>\n</body>' % url_from_host
+        else: to_return = to_return + '\n</body>'
+        return to_return
 
 
 @app.route('/<urlhash>/view', methods=["GET"])
