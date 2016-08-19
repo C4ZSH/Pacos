@@ -1,0 +1,25 @@
+===============================================================================================
+Simple upload server
+===============================================================================================
+
+This is a simple upload server created in python3. It has been tested with python 3.4.3 on
+Linux (Slackware 14.1) and FreeBSD 10.2. It will probably work with other versions of python
+and on other distros.
+
+It requires flask (which requires Werkzeug, Jinja2, and itsdangerous). 
+Running 'pip3 install flask' will install flask and these dependencies.
+In FreeBSD (and possibly other distros), you may also need to install py-sqlite3.
+Do this with 'sudo make PYTHON_VERSION=3.4 install clean' in /usr/ports/databases/py-sqlite3
+Replace PYTHON_VERSION as appropriate.
+
+Before running the server, a config must be created and the database must be initialised.
+It is recommended but optional that you use the interactive tool included to create the former,
+by running './setup.py'. This will also initialise the database and create the folder to store
+user uploads at the same time. The config is in a json format and is editable by hand so if you
+wish to create the config by hand you can initialise the database by running './setup.py -i'.
+Run setup.py with the -h flag to see more options.
+
+Run the server with 'python3 server.py'. Please ensure that the user you are running the server
+under has appropriate permissions to bind applications to the port you are using.
+
+Please report bugs to Aziz (aziz@alpacalyp.se).
